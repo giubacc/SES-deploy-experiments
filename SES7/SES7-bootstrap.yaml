@@ -1,0 +1,68 @@
+- name: SES7-ALL
+  hosts: all
+  become: true
+  tasks:
+    - zypper_repository:
+        repo: 'http://download.nue.suse.com/ibs/SUSE:/CA/SLE_15_SP2/SUSE:CA.repo'
+      ignore_errors: yes
+    - zypper_repository:
+        name: product
+        repo: 'http://dist.suse.de/ibs/SUSE/Products/SLE-Product-SLES/15-SP2/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: product-update
+        repo: 'http://dist.suse.de/ibs/SUSE/Updates/SLE-Product-SLES/15-SP2/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: base
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Basesystem/15-SP2/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Basesystem/15-SP2/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Server-Applications/15-SP2/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps-update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Server-Applications/15-SP2/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: storage
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/Storage/7/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: storage-update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/Storage/7/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        repo: '*'
+        runrefresh: yes
+
+- name: SES7-admins
+  hosts: admins
+  become: true
+  tasks:
+    - zypper:
+        name: salt-master
+        state: present
+    - name: Enable/Start salt-master
+      systemd:
+        name: salt-master
+        state: started
+        enabled: yes
+
+#- name: SES7-osds
+#  hosts: osds
+#  become: true
+#  tasks:
