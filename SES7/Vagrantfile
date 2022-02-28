@@ -3,7 +3,7 @@ IMAGE_NAME = "sles-15-sp2"
 CLUSTER_TYPE = "ses7"
 ADMIN_HOSTNAME = "admin"
 OSDN_HOSTNAME =  "osd"
-OSDN_COUNT = 4
+OSDN_COUNT = 1
 
 #he cluster network is the back-end network between the OSD nodes, for replication, re-
 #alancing, and recovery. If congured, this optional network would ideally provide twice the
@@ -80,13 +80,23 @@ Vagrant.configure("2") do |config|
       osdn.vm.network "private_network", ip: "#{PUBLIC_NET}.#{PUBLIC_NET_ADMIN_LAST_OCTET+i}"
 
       # Only execute once the Ansible provisioner,
-      # when all the osds are up and ready.
+      # when all the admins/osds are up and ready.
       if i == OSDN_COUNT
         osdn.vm.provision :ansible do |ansible|
-          # Disable default limit to connect to all the machines
           ansible.limit = "all"
           ansible.playbook = "SES7-bootstrap.yaml"
           ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
+        end
+        osdn.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7-playbook.yaml"
+          ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
         end
       end
     end

@@ -1,4 +1,4 @@
-- name: SES7-ALL
+- name: SES7-ADD-REPOS-ALL
   hosts: all
   become: true
   tasks:
@@ -49,20 +49,88 @@
         repo: '*'
         runrefresh: yes
 
-- name: SES7-admins
-  hosts: admins
+- name: SES7-INSTALL-PKGS-ALL
+  hosts: all
   become: true
   tasks:
     - zypper:
-        name: salt-master
+        name: vim
         state: present
-    - name: Enable/Start salt-master
-      systemd:
-        name: salt-master
-        state: started
-        enabled: yes
+    - zypper:
+        name: git-core
+        state: present
+    - zypper:
+        name: iputils
+        state: present
+    - zypper:
+        name: jq
+        state: present            
+    - zypper:
+        name: make
+        state: present    
+    - zypper:
+        name: iptables
+        state: present    
+    - zypper:
+        name: patch
+        state: present    
+    - zypper:
+        name: man
+        state: present    
+    - zypper:
+        name: command-not-found
+        state: present                            
+    - zypper:
+        name: bc
+        state: present  
+    - zypper:
+        name: apparmor-utils
+        state: present
+    - zypper:
+        name: apparmor-parser
+        state: present
+    - zypper:
+        name: lsof
+        state: present
+    - zypper:
+        name: chrony
+        state: present
+    - zypper:
+        name: hostname
+        state: present                        
 
-#- name: SES7-osds
-#  hosts: osds
-#  become: true
-#  tasks:
+- name: host file update - Local DNS setup across all the servers
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Update the /etc/hosts file with node name
+      tags: etchostsupdate
+      become: yes
+      become_user: root
+      lineinfile:
+        path: "/etc/hosts"
+        regexp: ".*\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        line: "{{ hostvars[item]['ansible_env'].SSH_CONNECTION.split(' ')[2] }}\t{{ hostvars[item]['ansible_hostname']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        state: present
+        backup: yes
+      register: etchostsupdate
+      when: ansible_hostname != "{{ item }}" or ansible_hostname == "{{ item }}"
+      with_items: "{{groups['all']}}"
+
+- name: SES7-SSH-KEYS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - name: import SSH keys
+      shell: | 
+            cat /home/vagrant/.ssh/sesdev.pub >> /home/vagrant/.ssh/authorized_keys
+            [ ! -e "/root/.ssh" ] && mkdir /root/.ssh
+            chmod 600 /home/vagrant/.ssh/sesdev
+            cp /home/vagrant/.ssh/sesdev* /root/.ssh/
+            ln -s /root/.ssh/sesdev /root/.ssh/id_rsa
+            ln -s /root/.ssh/sesdev.pub /root/.ssh/id_rsa.pub
+            cat /root/.ssh/sesdev.pub >> /root/.ssh/authorized_keys
+            cat >> /root/.ssh/config << 'EOF'
+            Host *
+            StrictHostKeyChecking no
+            EOF
