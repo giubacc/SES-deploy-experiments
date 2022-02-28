@@ -62,3 +62,16 @@
         OSDN_COUNT: "{{ osdn_count }}"
     - debug:
         var: shell_output.stdout_lines
+
+- name: SES7-admins-install-ceph-salt
+  hosts: admins
+  become: true
+  tasks:
+    - zypper:
+        name: ceph-salt
+        state: present
+    - name: Restart salt-master
+      systemd:
+        name: salt-master
+        state: restarted
+        daemon_reload: yes
