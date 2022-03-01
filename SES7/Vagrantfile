@@ -3,11 +3,11 @@ IMAGE_NAME = "sles-15-sp2"
 CLUSTER_TYPE = "ses7"
 ADMIN_HOSTNAME = "admin"
 OSDN_HOSTNAME =  "osd"
-OSDN_COUNT = 1
+OSDN_COUNT = 4
 
-#he cluster network is the back-end network between the OSD nodes, for replication, re-
-#alancing, and recovery. If congured, this optional network would ideally provide twice the
-#andwidth of the public network with default three-way replication, since the primary OSD
+#The cluster network is the back-end network between the OSD nodes, for replication, re-
+#balancing, and recovery. If configured, this optional network would ideally provide twice the
+#bandwidth of the public network with default three-way replication, since the primary OSD
 #ends two copies to other OSDs via this network.
 CLUSTER_NET = "10.95.201"
 CLUSTER_NET_ADMIN_LAST_OCTET = 101
@@ -92,7 +92,15 @@ Vagrant.configure("2") do |config|
         end
         osdn.vm.provision :ansible do |ansible|
           ansible.limit = "all"
-          ansible.playbook = "SES7-playbook.yaml"
+          ansible.playbook = "SES7-salt-install.yaml"
+          ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
+        end
+        osdn.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7-salt-config.yaml"
           ansible.groups = ansible_groups
           ansible.extra_vars = {
             osdn_count: OSDN_COUNT
@@ -101,6 +109,5 @@ Vagrant.configure("2") do |config|
       end
     end
   end
-
 
 end
