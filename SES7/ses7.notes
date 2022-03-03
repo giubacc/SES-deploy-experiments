@@ -1,0 +1,74 @@
+
+mount 192.168.121.1:/home/giuseppe/tester/SES-deploy-experiments/SES7 /vagrant
+
+ceph-salt config /ceph_cluster/minions add '*'
+ceph-salt config /ceph_cluster/roles/cephadm add '*'
+ceph-salt config /ceph_cluster/roles/admin add admin.ses7
+ceph-salt config /ceph_cluster/roles/bootstrap set osd-1.ses7
+ceph-salt config /cephadm_bootstrap/mon_ip set 10.96.201.102
+ceph-salt config /ceph_cluster/roles/tuned/latency add osd-1.ses7
+ceph-salt config /ceph_cluster/roles/tuned/throughput add osd-2.ses7
+ceph-salt config /ssh generate
+ceph-salt config /time_server/servers add admin.ses7
+ceph-salt config /time_server/external_servers add pool.ntp.org
+ceph-salt config /time_server/subnet set 10.96.201.0/24
+ceph-salt config /cephadm_bootstrap/dashboard/username set admin
+ceph-salt config /cephadm_bootstrap/dashboard/password set admin
+ceph-salt config /cephadm_bootstrap/dashboard/force_password_update disable
+ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.suse.de/devel/storage/7.0/containers/ses/7/ceph/ceph
+ceph-salt config /cephadm_bootstrap/ceph_conf add global
+ceph-salt config /cephadm_bootstrap/ceph_conf/global set cluster_network 10.95.201.0/24
+
+# related log for ceph-salt
+/var/log/ceph-salt.log
+
+ceph-salt status
+
+ceph-salt export > cluster.json
+ceph-salt import cluster.json
+
+ceph-salt apply --non-interactive
+ceph-salt update
+
+# The Ceph orchestrator command ceph orch —which is an interface to the cephadm 
+# module— will take care of listing cluster components and deploying Ceph ervices on new cluster nodes
+
+ceph orch status
+ceph orch device ls // hdd on nodes
+ceph orch ls 		// services on nodes --host --service-type [mon , osd , mgr , mds , and rgw]
+ceph orch ps 		// daemons running on nodes
+
+# To query the status of a particular daemon, use --daemon_type and --daemon_id . For
+# OSDs, the ID is the numeric OSD ID. For MDS, the ID is the le system name:
+
+ceph orch ps --daemon_type osd --daemon_id 0
+ceph orch ps --daemon_type mds --daemon_id my_cephfs
+
+#old school
+#!/bin/bash
+for (( c=1; c<=7; c++ ))
+do
+	ceph osd out osd.$c
+	ceph osd down osd.$c
+	ceph osd crush rm osd.$c
+	ceph osd destroy osd.$c --yes-i-really-mean-it
+done
+
+#new school
+ceph orch osd rm 0 --force --zap
+Scheduled OSD(s) for removal
+
+#pools
+
+ceph osd pool ls
+
+ceph osd pool create sesdev_fs_data
+ceph osd pool create sesdev_fs_metadata
+ceph osd pool create sesdev_nfs_ganesha_rados
+
+ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
+
+rados --pool sesdev_nfs_ganesha_rados ls
+rados --pool sesdev_nfs_ganesha_rados put sesdev_nfs ./nfs_export.cfg
+
+mount -t nfs osd-1: //test
