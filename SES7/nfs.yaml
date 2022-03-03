@@ -1,0 +1,8 @@
+service_type: nfs
+service_id: sesdev_nfs
+placement:
+ hosts:
+ - osd-1
+ - osd-2
+spec:
+  pool: sesdev_nfs_ganesha_rados
