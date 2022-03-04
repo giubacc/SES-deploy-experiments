@@ -65,6 +65,7 @@ ceph osd pool ls
 ceph osd pool create sesdev_fs_data
 ceph osd pool create sesdev_fs_metadata
 ceph osd pool create sesdev_nfs_ganesha
+ceph osd pool application enable sesdev_nfs_ganesha cephfs
 
 ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
 
