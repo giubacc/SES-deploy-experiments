@@ -22,3 +22,5 @@
       register: shell_output
     - debug:
         var: shell_output.stdout_lines
+    - name: SES7-admins-ceph-salt-apply
+      command: ceph-salt apply --non-interactive

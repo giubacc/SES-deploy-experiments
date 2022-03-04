@@ -1,5 +1,5 @@
 
-mount 192.168.121.1:/home/giuseppe/tester/SES-deploy-experiments/SES7 /vagrant
+mount 192.168.121.1:/home/giuseppe/developer/personal/SES-deploy-experiments/SES7 /vagrant
 
 ceph-salt config /ceph_cluster/minions add '*'
 ceph-salt config /ceph_cluster/roles/cephadm add '*'
@@ -39,7 +39,7 @@ ceph orch ls 		// services on nodes --host --service-type [mon , osd , mgr , mds
 ceph orch ps 		// daemons running on nodes
 
 # To query the status of a particular daemon, use --daemon_type and --daemon_id . For
-# OSDs, the ID is the numeric OSD ID. For MDS, the ID is the le system name:
+# OSDs, the ID is the numeric OSD ID. For MDS, the ID is the system name:
 
 ceph orch ps --daemon_type osd --daemon_id 0
 ceph orch ps --daemon_type mds --daemon_id my_cephfs
@@ -64,11 +64,20 @@ ceph osd pool ls
 
 ceph osd pool create sesdev_fs_data
 ceph osd pool create sesdev_fs_metadata
-ceph osd pool create sesdev_nfs_ganesha_rados
+ceph osd pool create sesdev_nfs_ganesha
 
 ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
 
-rados --pool sesdev_nfs_ganesha_rados ls
-rados --pool sesdev_nfs_ganesha_rados put sesdev_nfs ./nfs_export.cfg
+rados --pool sesdev_nfs_ganesha ls
+rados --pool sesdev_nfs_ganesha put sesdev_nfs ./nfs_export.cfg
 
-mount -t nfs osd-1: //test
+ceph-authtool -p /etc/ceph/ceph.client.admin.keyring > admin.key
+chmod 600 admin.key
+mount -t ceph osd-2:6789:/ /test -o name=admin,secretfile=admin.key
+mount -t nfs osd-2:/ /test
+mount -t nfs -o nfsvers=4.1,proto=tcp osd-2:/ /test_gan
+
+#prometeus
+
+ceph mgr module enable prometheus
+

@@ -4,7 +4,7 @@
 # ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
 
 service_type: mds
-service_id: sesdev_fs
+service_id: sesdev_mds
 placement:
  hosts:
   - osd-2
