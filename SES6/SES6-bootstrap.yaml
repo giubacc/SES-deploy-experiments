@@ -1,0 +1,168 @@
+- name: SES6-ADD-REPOS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - zypper_repository:
+        repo: 'http://download.nue.suse.com/ibs/SUSE:/CA/SLE_15_SP1/SUSE:CA.repo'
+      ignore_errors: yes
+    - zypper_repository:
+        name: product
+        repo: 'http://dist.suse.de/ibs/SUSE/Products/SLE-Product-SLES/15-SP1/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: product-update
+        repo: 'http://dist.suse.de/ibs/SUSE/Updates/SLE-Product-SLES/15-SP1/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: base
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Basesystem/15-SP1/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Basesystem/15-SP1/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Server-Applications/15-SP1/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps-update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Server-Applications/15-SP1/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: storage
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/Storage/6/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: storage-update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/Storage/6/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        repo: '*'
+        runrefresh: yes
+
+- name: SES6-INSTALL-PKGS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - zypper:
+        name: vim
+        state: present
+    - zypper:
+        name: git-core
+        state: present
+    - zypper:
+        name: iputils
+        state: present
+    - zypper:
+        name: jq
+        state: present            
+    - zypper:
+        name: make
+        state: present    
+    - zypper:
+        name: iptables
+        state: present    
+    - zypper:
+        name: patch
+        state: present    
+    - zypper:
+        name: man
+        state: present    
+    - zypper:
+        name: command-not-found
+        state: present                            
+    - zypper:
+        name: bc
+        state: present  
+    - zypper:
+        name: apparmor-utils
+        state: present
+    - zypper:
+        name: apparmor-parser
+        state: present
+    - zypper:
+        name: lsof
+        state: present
+    - zypper:
+        name: chrony
+        state: present
+    - zypper:
+        name: hostname
+        state: present
+    - zypper:
+        name: systemd
+        state: present
+    - zypper:
+        name: systemd-sysvinit
+        state: present
+    - zypper:
+        name: udev
+        state: present
+    - zypper:
+        name: libudev1
+        state: present
+    - zypper:
+        name: systemd-coredump
+        state: present
+    - zypper:
+        name: ca-certificates-suse
+        state: present
+    - zypper:
+        name: supportutils
+        state: present
+    - zypper:
+        name: rbd-nbd
+        state: present
+    - zypper:
+        name: rsync
+        state: present
+    - zypper:
+        name: nfs-client
+        state: present
+
+- name: host file update - Local DNS setup across all the servers
+  hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Update the /etc/hosts file with node name
+      tags: etchostsupdate
+      lineinfile:
+        path: "/etc/hosts"
+        regexp: ".*\t{{ hostvars[item]['ansible_fqdn']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        line: "{{ hostvars[item]['ansible_eth2'].ipv4.address }}\t{{ hostvars[item]['ansible_fqdn']}}\t{{ hostvars[item]['ansible_hostname']}}"
+        state: present
+        backup: yes
+      register: etchostsupdate
+      when: ansible_hostname != "{{ item }}" or ansible_hostname == "{{ item }}"
+      with_items: "{{groups['all']}}"
+    - name: Patch the /etc/hosts 
+      shell: | 
+        sed -i s/"127.0.1.1 admin.ses6 admin"/""/ /etc/hosts
+
+- name: SES6-SSH-KEYS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - name: import SSH keys
+      shell: | 
+            cat /home/vagrant/.ssh/sesdev.pub >> /home/vagrant/.ssh/authorized_keys
+            [ ! -e "/root/.ssh" ] && mkdir /root/.ssh
+            chmod 600 /home/vagrant/.ssh/sesdev
+            cp /home/vagrant/.ssh/sesdev* /root/.ssh/
+            ln -s /root/.ssh/sesdev /root/.ssh/id_rsa
+            ln -s /root/.ssh/sesdev.pub /root/.ssh/id_rsa.pub
+            cat /root/.ssh/sesdev.pub >> /root/.ssh/authorized_keys
+            cat >> /root/.ssh/config << 'EOF'
+            Host *
+            StrictHostKeyChecking no
+            EOF

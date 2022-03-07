@@ -1,0 +1,19 @@
+- name: SES6-admins-salt-config
+  hosts: admins
+  become: true
+  tasks:
+    - name: salt [0,1]
+      shell: |
+        sleep 5
+        salt '*' grains.append deepsea default
+        sleep 5
+        cat > /srv/pillar/ceph/stack/global.yml << EOF
+        time_server: pool.ntp.org
+        EOF
+        salt '*' saltutil.pillar_refresh
+        salt '*' state.apply ceph.time
+        salt-run state.orch ceph.stage.prep
+        salt-run state.orch ceph.stage.discovery
+      register: salt_01
+    - debug:
+        var: salt_01.stdout_lines
