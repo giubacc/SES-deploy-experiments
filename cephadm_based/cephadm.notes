@@ -1,0 +1,2 @@
+zypper install -y cephadm
+cephadm bootstrap --mon-ip 10.89.201.101
