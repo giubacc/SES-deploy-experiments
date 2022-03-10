@@ -1,0 +1,113 @@
+
+IMAGE_NAME = "sles-15-sp3"
+CLUSTER_TYPE = "ses7p"
+ADMIN_HOSTNAME = "admin"
+OSDN_HOSTNAME =  "osd"
+OSDN_COUNT = 4
+
+#The cluster network is the back-end network between the OSD nodes, for replication, re-
+#balancing, and recovery. If configured, this optional network would ideally provide twice the
+#bandwidth of the public network with default three-way replication, since the primary OSD
+#ends two copies to other OSDs via this network.
+CLUSTER_NET = "10.97.201"
+CLUSTER_NET_ADMIN_LAST_OCTET = 101
+
+#The public network is between clients and
+#gateways on the one side to talk to monitors, managers, MDS nodes, OSD nodes. It is also used
+#by monitors, managers, and MDS nodes to talk with OSD nodes.
+PUBLIC_NET = "10.98.201"
+PUBLIC_NET_ADMIN_LAST_OCTET = 101
+
+ansible_groups = {
+  "admins" => [
+    "admin"
+  ],
+  "osds" => [
+    "osdn.[1:#{OSDN_COUNT}]"
+  ]
+}
+
+Vagrant.configure("2") do |config|
+
+  config.ssh.insert_key = false
+  config.vm.provider "libvirt" do |lv|
+    lv.connect_via_ssh = false
+    lv.qemu_use_session = false
+    lv.nic_model_type = "e1000"
+    lv.cpu_mode = 'host-passthrough'
+  end
+
+  #admin node
+  config.vm.define "admin" do |admin|
+    admin.vm.provider "libvirt" do |lv|
+      lv.memory = 4096
+      lv.cpus = 2
+    end
+
+    admin.vm.provision "file",  source: "keys/sesdev",
+                                destination:".ssh/sesdev"
+    admin.vm.provision "file",  source: "keys/sesdev.pub",
+                                destination:".ssh/sesdev.pub"
+                                
+    admin.vm.synced_folder ".", "/vagrant", disabled: true
+
+    admin.vm.box = IMAGE_NAME
+    admin.vm.hostname = "#{ADMIN_HOSTNAME}.#{CLUSTER_TYPE}"
+    admin.vm.network "private_network", autostart: true, ip: "#{CLUSTER_NET}.#{CLUSTER_NET_ADMIN_LAST_OCTET}"
+    admin.vm.network "private_network", ip: "#{PUBLIC_NET}.#{PUBLIC_NET_ADMIN_LAST_OCTET}"
+  end
+
+  #osd node
+  (1..OSDN_COUNT).each do |i|  
+    config.vm.define "osdn.#{i}" do |osdn|
+      osdn.vm.provider "libvirt" do |lv|
+        lv.memory = 4096
+        lv.cpus = 2
+        lv.storage :file, size: "10G", type: 'qcow2', serial: "664620#{i}"
+        lv.storage :file, size: "10G", type: 'qcow2', serial: "774684#{i}"
+      end
+
+      osdn.vm.provision "file", source: "keys/sesdev",
+                                destination:".ssh/sesdev"
+      osdn.vm.provision "file", source: "keys/sesdev.pub",
+                                destination:".ssh/sesdev.pub"
+      
+      osdn.vm.synced_folder ".", "/vagrant", disabled: true
+
+      osdn.vm.box = IMAGE_NAME
+      osdn.vm.hostname = "#{OSDN_HOSTNAME}-#{i}.#{CLUSTER_TYPE}"
+      osdn.vm.network "private_network", autostart: true, ip: "#{CLUSTER_NET}.#{CLUSTER_NET_ADMIN_LAST_OCTET+i}"
+      osdn.vm.network "private_network", ip: "#{PUBLIC_NET}.#{PUBLIC_NET_ADMIN_LAST_OCTET+i}"
+
+      # Only execute once the Ansible provisioner,
+      # when all the admins/osds are up and ready.
+      if i == OSDN_COUNT
+        osdn.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-bootstrap.yaml"
+          ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
+        end
+        osdn.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-salt-install.yaml"
+          ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
+        end
+        # osdn.vm.provision :ansible do |ansible|
+        #   ansible.limit = "all"
+        #   ansible.playbook = "SES7P-salt-config.yaml"
+        #   ansible.groups = ansible_groups
+        #   ansible.extra_vars = {
+        #     osdn_count: OSDN_COUNT
+        #   }
+        # end
+      end
+    end
+  end
+
+end

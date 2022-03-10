@@ -1,2 +1,21 @@
 zypper install -y cephadm
+
+#bootstrap
 cephadm bootstrap --mon-ip 10.89.201.101
+
+#add nodes
+ssh-copy-id -f -i /etc/ceph/ceph.pub root@osd-1
+ssh-copy-id -f -i /etc/ceph/ceph.pub root@osd-2
+ssh-copy-id -f -i /etc/ceph/ceph.pub root@osd-3
+ssh-copy-id -f -i /etc/ceph/ceph.pub root@osd-4
+ceph orch host add osd-1 10.89.201.102
+ceph orch host add osd-2 10.89.201.103
+ceph orch host add osd-3 10.89.201.104
+ceph orch host add osd-4 10.89.201.105
+
+#check chronyd is enabled
+systemctl is-enabled chronyd.service; echo $?
+systemctl enable chronyd
+systemctl start chronyd
+
+#then you can proceed as for SES7P

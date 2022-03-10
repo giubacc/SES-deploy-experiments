@@ -1,0 +1,5 @@
+vagrant box add --provider libvirt --name sles-15-sp3 http://download.nue.suse.com/ibs/Virtualization:/Vagrant:/SLE-15-SP3/images/SLES15-SP3-Vagrant.x86_64-libvirt.box
+
+mount 192.168.121.1:/home/giuseppe/developer/personal/SES-deploy-experiments/SES7P /vagrant
+
+zypper --non-interactive ar https://download.suse.de/ibs/Devel:/Storage:/7.0:/Pacific/SLE_15_SP3/Devel:Storage:7.0:Pacific.repo
