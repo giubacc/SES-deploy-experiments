@@ -3,7 +3,7 @@ IMAGE_NAME = "sles-15-sp3"
 CLUSTER_TYPE = "ses7p"
 ADMIN_HOSTNAME = "admin"
 OSDN_HOSTNAME =  "osd"
-OSDN_COUNT = 4
+OSDN_COUNT = 5
 
 #The cluster network is the back-end network between the OSD nodes, for replication, re-
 #balancing, and recovery. If configured, this optional network would ideally provide twice the
@@ -98,14 +98,14 @@ Vagrant.configure("2") do |config|
             osdn_count: OSDN_COUNT
           }
         end
-        # osdn.vm.provision :ansible do |ansible|
-        #   ansible.limit = "all"
-        #   ansible.playbook = "SES7P-salt-config.yaml"
-        #   ansible.groups = ansible_groups
-        #   ansible.extra_vars = {
-        #     osdn_count: OSDN_COUNT
-        #   }
-        # end
+        osdn.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-salt-config.yaml"
+          ansible.groups = ansible_groups
+          ansible.extra_vars = {
+            osdn_count: OSDN_COUNT
+          }
+        end
       end
     end
   end
