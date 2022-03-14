@@ -6,7 +6,7 @@ mount 192.168.121.1:/home/giuseppe/developer/personal/SES-deploy-experiments/SES
 ceph-salt config /ceph_cluster/minions add '*'
 ceph-salt config /ceph_cluster/roles/cephadm add '*'
 ceph-salt config /ceph_cluster/roles/admin add admin.ses7
-ceph-salt config /ceph_cluster/roles/bootstrap set osd-1.ses7
+ceph-salt config /ceph_cluster/roles/bootstrap set osd-3.ses7
 ceph-salt config /cephadm_bootstrap/mon_ip set 10.96.201.102
 ceph-salt config /ceph_cluster/roles/tuned/latency add osd-1.ses7
 ceph-salt config /ceph_cluster/roles/tuned/throughput add osd-2.ses7

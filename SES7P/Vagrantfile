@@ -3,7 +3,7 @@ IMAGE_NAME = "sles-15-sp3"
 CLUSTER_TYPE = "ses7p"
 ADMIN_HOSTNAME = "admin"
 OSDN_HOSTNAME =  "osd"
-OSDN_COUNT = 5
+OSDN_COUNT = 4
 
 #The cluster network is the back-end network between the OSD nodes, for replication, re-
 #balancing, and recovery. If configured, this optional network would ideally provide twice the
