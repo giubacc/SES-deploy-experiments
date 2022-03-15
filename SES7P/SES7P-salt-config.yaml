@@ -7,8 +7,8 @@
         ceph-salt config /ceph_cluster/minions add '*'
         ceph-salt config /ceph_cluster/roles/cephadm add '*'
         ceph-salt config /ceph_cluster/roles/admin add admin.ses7p
-        ceph-salt config /ceph_cluster/roles/bootstrap set osd-1.ses7p
-        ceph-salt config /cephadm_bootstrap/mon_ip set 10.98.201.102
+        ceph-salt config /ceph_cluster/roles/bootstrap set osd-2.ses7p
+        ceph-salt config /cephadm_bootstrap/mon_ip set 10.98.201.103
         ceph-salt config /ssh generate
         ceph-salt config /time_server/servers add admin.ses7p
         ceph-salt config /time_server/external_servers add pool.ntp.org
