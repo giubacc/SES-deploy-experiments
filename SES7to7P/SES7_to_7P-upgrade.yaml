@@ -1,0 +1,64 @@
+- name: UPGR-ADD-REPOS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - name: remove old repos
+      shell: |
+        zypper rr -a
+    - zypper_repository:
+        repo: 'http://download.suse.de/ibs/SUSE:/CA/SLE_15_SP3/SUSE:CA.repo'
+      ignore_errors: yes
+    - zypper_repository:
+        name: product
+        repo: 'http://dist.suse.de/ibs/SUSE/Products/SLE-Product-SLES/15-SP3/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: product-update
+        repo: 'http://dist.suse.de/ibs/SUSE/Updates/SLE-Product-SLES/15-SP3/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: base
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Basesystem/15-SP3/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Basesystem/15-SP3/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Server-Applications/15-SP3/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: server-apps-update
+        repo: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Server-Applications/15-SP3/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        repo: '*'
+        runrefresh: yes
+    - name: adding devel storage repo and dist-upgrade
+      shell: |
+        zypper --non-interactive ar --refresh http://download.suse.de/ibs/SUSE:/SLE-15-SP3:/Update:/Products:/SES7/images/repo/SUSE-Enterprise-Storage-7.1-POOL-x86_64-Media1/ devel-repo-1
+        zypper --non-interactive ar --refresh http://download.suse.de/ibs/Devel:/Storage:/7.0:/Pacific/SLE_15_SP3/ devel-repo-2
+        zypper --non-interactive --gpg-auto-import-keys ref
+        zypper --non-interactive dup --allow-vendor-change -y
+      register: shell_output
+    - debug:
+        var: shell_output.stdout_lines
+
+- name: SES7P-INSTALL-PKGS-ALL
+  hosts: all
+  become: true
+  tasks:
+    - name: Update all packages
+      zypper:
+        name: '*'
+        state: latest      
+      register: shell_output
+    - debug:
+        var: shell_output.stdout_lines

@@ -1,0 +1,77 @@
+- name: SES7_to_7P-all-install-salt-minion
+  hosts: all
+  become: true
+  tasks:
+    - zypper:
+        name: salt-minion
+        state: present
+    - name: patching /etc/salt/minion
+      shell: |
+        sed -i 's/^#master:.*/master: admin/g' /etc/salt/minion
+        sed -i 's/^#log_level: warning/log_level: info/g' /etc/salt/minion
+    - name: Enable/Start salt-minion
+      systemd:
+        name: salt-minion
+        state: started
+        enabled: yes
+
+- name: SES7_to_7P-admins-install-salt-master
+  hosts: admins
+  become: true
+  tasks:
+    - zypper:
+        name: salt-master
+        state: present
+    - name: Enable/Start salt-master
+      systemd:
+        name: salt-master
+        state: started
+        enabled: yes
+
+- name: SES7_to_7P-all-restart-salt-minion
+  hosts: all
+  become: true
+  tasks:
+    - wait_for:
+        timeout: 5
+      delegate_to: localhost
+    - name: Restart salt-minion
+      systemd:
+        name: salt-minion
+        state: restarted
+        daemon_reload: yes
+
+- name: SES7_to_7P-admins-accept-minion-keys
+  hosts: admins
+  become: true
+  tasks:
+    - name: accepting minion keys
+      shell: |
+        MINION_COUNT=$(expr $OSDN_COUNT + 1)
+        echo "Waiting for $MINION_COUNT minions to submit their keys..."
+        while true; do
+        salt-key -L
+        N=$(salt-key --out=json -L | jq '.minions_pre | length')
+        echo "${N} of $MINION_COUNT minions have submitted their keys."
+        [ "$N" = "$MINION_COUNT" ] && break
+        sleep 3
+        done
+        salt-key -Ay
+      register: shell_output
+      environment:
+        OSDN_COUNT: "{{ osdn_count }}"
+    - debug:
+        var: shell_output.stdout_lines
+
+- name: SES7_to_7P-admins-install-ceph-salt
+  hosts: admins
+  become: true
+  tasks:
+    - zypper:
+        name: ceph-salt
+        state: present
+    - name: Restart salt-master
+      systemd:
+        name: salt-master
+        state: restarted
+        daemon_reload: yes

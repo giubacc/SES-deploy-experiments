@@ -1,0 +1,16 @@
+## You can do it either in the /etc/ansible/ansible.cfg or ~/.ansible.cfg file:
+
+[defaults]
+host_key_checking = False
+
+## Or you can setup and env variable (this might not work on newer ansible versions):
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+
+ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
+ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
+
+###
+ceph orch upgrade start --image registry.suse.de/devel/storage/7.0/pacific/containers/ses/7.1/ceph/ceph
+ceph orch upgrade status
+ceph -w
