@@ -7,6 +7,7 @@ service_type: mds
 service_id: sesdev_mds
 placement:
  hosts:
+  - osd-1
   - osd-2
   - osd-3
   - osd-4

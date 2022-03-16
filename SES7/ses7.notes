@@ -64,15 +64,15 @@ Scheduled OSD(s) for removal
 
 ceph osd pool ls
 
-ceph osd pool create sesdev_fs_data
-ceph osd pool create sesdev_fs_metadata
-ceph osd pool create sesdev_nfs_ganesha
-ceph osd pool application enable sesdev_nfs_ganesha cephfs
+ceph osd pool create test_fs_data
+ceph osd pool create test_fs_metadata
+ceph osd pool create test_nfs_ganesha
+ceph osd pool application enable test_nfs_ganesha cephfs
 
-ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
+ceph fs new test_fs test_fs_metadata test_fs_data
 
-rados --pool sesdev_nfs_ganesha ls
-rados --pool sesdev_nfs_ganesha put sesdev_nfs ./nfs_export.cfg
+rados --pool test_nfs_ganesha ls
+rados --pool test_nfs_ganesha put test_nfs ./nfs_export.cfg
 
 ceph-authtool -p /etc/ceph/ceph.client.admin.keyring > admin.key
 chmod 600 admin.key
