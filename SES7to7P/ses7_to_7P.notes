@@ -10,7 +10,39 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
 ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
 
-###
+### do upgrade
 ceph orch upgrade start --image registry.suse.de/devel/storage/7.0/pacific/containers/ses/7.1/ceph/ceph
 ceph orch upgrade status
 ceph -w
+
+### add node
+zypper in salt-minion
+sed -i 's/^#master:.*/master: admin/g' /etc/salt/minion
+sed -i 's/^#log_level: warning/log_level: info/g' /etc/salt/minion
+systemctl enable salt-minion.service
+systemctl restart salt-minion.service
+salt-key -L
+salt-key -Ay
+ceph-salt config /ceph_cluster/minions add '*'
+ceph-salt config /ceph_cluster/roles/cephadm add '*'
+ceph-salt apply --non-interactive
+
+### issue
+
+#44075 mgr/cephadm: drop osdspec_affinity tracking
+https://github.com/ceph/ceph/pull/44075
+
+jq  '.service_name' /var/lib/ceph/4cf7be44-9ffd-11ec-b642-525400001294/osd.0/unit.meta 
+"osd"
+
+cephadm ceph-volume lvm list /dev/vdc
+..
+osdspec affinity          fill-mesh
+
+### nfs ganesha
+
+ceph mgr module ls | grep -A100 nfs
+ceph mgr module ls | jq '.enabled_modules'
+ceph mgr module enable nfs
+
+

@@ -1,7 +1,7 @@
 
 vagrant box add --provider libvirt --name sles-15-sp2 http://download.nue.suse.com/ibs/Virtualization:/Vagrant:/SLE-15-SP2/images/SLES15-SP2-Vagrant.x86_64-libvirt.box
 
-mount 192.168.121.1:/home/giuseppe/developer/personal/SES-deploy-experiments/SES7P /vagrant
+mount 192.168.121.1:/home/giuseppe/developer/personal/SES-deploy-experiments /vagrant
 
 ceph-salt config /ceph_cluster/minions add '*'
 ceph-salt config /ceph_cluster/roles/cephadm add '*'
