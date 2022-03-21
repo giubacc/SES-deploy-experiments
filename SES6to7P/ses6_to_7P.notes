@@ -1,0 +1,8 @@
+vagrant box add --provider libvirt --name sles-15-sp1 http://download.nue.suse.com/ibs/Virtualization:/Vagrant:/SLE-15-SP1/images/SLES15-SP1-Vagrant.x86_64-libvirt.box
+
+salt-call grains.get dashboard_creds
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+
+ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
+ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory SES6_to_7P-upgrade.yaml

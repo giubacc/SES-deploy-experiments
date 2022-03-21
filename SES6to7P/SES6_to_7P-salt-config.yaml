@@ -38,7 +38,7 @@
         EOF
         deepsea stage run --simple-output ceph.stage.configure
         deepsea stage run --simple-output ceph.stage.deploy
-        deepsea stage run --simple-output ceph.stage.services
+        deepsea stage run --simple-output ceph.stage.services        
         ceph config set mon auth_allow_insecure_global_id_reclaim false
       register: salt_23
     - debug:

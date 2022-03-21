@@ -8,7 +8,7 @@ host_key_checking = False
 export ANSIBLE_HOST_KEY_CHECKING=False
 
 ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
-ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
+ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory SES7_to_7P-upgrade.yaml
 
 ### do upgrade
 ceph orch upgrade start --image registry.suse.de/devel/storage/7.0/pacific/containers/ses/7.1/ceph/ceph

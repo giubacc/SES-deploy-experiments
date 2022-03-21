@@ -1,0 +1,1 @@
+salt-call grains.get dashboard_creds

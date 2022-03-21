@@ -16,8 +16,8 @@ done
 
 ceph fs fail sesdev_fs 
 ceph fs rm sesdev_fs --yes-i-really-mean-it
-ceph osd pool rm sesdev_fs_data sesdev_fs_data --yes-i-really-really-mean-it
-ceph osd pool rm sesdev_fs_metadata sesdev_fs_metadata --yes-i-really-really-mean-it
+ceph osd pool rm test_fs_data test_fs_data --yes-i-really-really-mean-it
+ceph osd pool rm test_fs_metadata test_fs_metadata --yes-i-really-really-mean-it
 ceph config set mon mon_allow_pool_delete true
 
 #adding a EC pool to an existing FS
