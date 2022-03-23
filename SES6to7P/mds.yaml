@@ -1,0 +1,8 @@
+service_type: mds
+service_id: cephfs
+placement:
+ hosts:
+  - osd-1
+  - osd-2
+  - osd-3
+  - osd-4

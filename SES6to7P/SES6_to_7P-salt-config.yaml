@@ -1,4 +1,4 @@
-- name: SES6-admins-salt-config
+- name: SES6_to_7P-admins-salt-config [1]
   hosts: admins
   become: true
   tasks:
@@ -20,6 +20,22 @@
     - debug:
         var: salt_01.stdout_lines
 
+- name: SES6_to_7P-REBOOT
+  hosts: all
+  become: true
+  tasks:
+    - name: Reboot host and wait for it to restart
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30  
+
+- name: SES6_to_7P-admins-salt-config [2]
+  hosts: admins
+  become: true
+  tasks:
     - name: salt [configure, deploy]
       shell: |
         mkdir -p /srv/pillar/ceph/proposals

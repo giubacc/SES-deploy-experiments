@@ -1,4 +1,4 @@
-- name: SES6-ADD-REPOS-ALL
+- name: SES6_to_7P-ADD-REPOS-ALL
   hosts: all
   become: true
   tasks:
@@ -49,7 +49,7 @@
         repo: '*'
         runrefresh: yes
 
-- name: SES6-INSTALL-PKGS-ALL
+- name: SES6_to_7P-INSTALL-PKGS-ALL
   hosts: all
   become: true
   tasks:
@@ -128,6 +128,9 @@
     - zypper:
         name: nfs-client
         state: present
+    - zypper:
+        name: bind-utils
+        state: present
 
 - name: host file update - Local DNS setup across all the servers
   hosts: all
@@ -147,9 +150,9 @@
       with_items: "{{groups['all']}}"
     - name: Patch the /etc/hosts 
       shell: | 
-        sed -i s/"127.0.1.1 admin.ses6 admin"/""/ /etc/hosts
+        sed -i s/"127.0.1.1 {{ ansible_facts['fqdn']}} {{ ansible_facts['hostname']}}"/""/ /etc/hosts
 
-- name: SES6-SSH-KEYS-ALL
+- name: SES6_to_7P-SSH-KEYS-ALL
   hosts: all
   become: true
   tasks:

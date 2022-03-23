@@ -1,4 +1,4 @@
-- name: UPGR-ADD-REPOS-ALL
+- name: SES6_to_7P-UPGR-ADD-REPOS-ALL
   hosts: all
   become: true
   tasks:
@@ -51,7 +51,7 @@
     - debug:
         var: shell_output.stdout_lines
 
-- name: SES7P-INSTALL-PKGS-ALL
+- name: SES6_to_7P-INSTALL-PKGS-ALL
   hosts: all
   become: true
   tasks:
@@ -59,6 +59,145 @@
       zypper:
         name: '*'
         state: latest      
+      register: shell_output
+    - debug:
+        var: shell_output.stdout_lines
+
+- name: SES6_to_7P-REBOOT-AFTER-SYS-UPGR
+  hosts: all
+  become: true
+  tasks:
+    - name: Reboot host and wait for it to restart
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+
+- name: SES6_to_7P-disable stages
+  hosts: admins
+  become: true
+  tasks:
+    - name: salt [pillar refresh and assimilate existing config]
+      shell: |
+        cat >> /srv/pillar/ceph/stack/global.yml << EOF
+        stage_prep: disabled
+        stage_discovery: disabled
+        stage_configure: disabled
+        stage_deploy: disabled
+        stage_services: disabled
+        stage_remove: disabled
+        EOF
+        salt '*' saltutil.pillar_refresh
+        ceph config assimilate-conf -i /etc/ceph/ceph.conf
+      register: shell_output
+    - debug:
+        var: shell_output.stdout_lines
+
+- name: SES6_to_7P-adopt
+  hosts: admins
+  become: true
+  tasks:
+    - name: salt [adopt]
+      shell: |
+        cat > /srv/salt/ceph/upgrade/ses7/adopt.sls << EOF
+        {% set require_osd_release = salt['osd.require_osd_release']() %}
+        {% if require_osd_release and require_osd_release != 'nautilus' %}
+        require_osd_release is not nautilus:
+          test.fail_without_changes:
+            - name: |
+                'require-osd-release' is currently '{{ require_osd_release }}',
+                but must be set to 'nautilus' before upgrading to SES 7.
+                Please run `ceph osd require-osd-release nautilus` to fix this
+                before proceeding further.
+            - failhard: True
+        {% endif %}
+
+        {% if grains.get('oscodename', '') != 'SUSE Linux Enterprise Server 15 SP3' %}
+
+        not running sle 15 sp3:
+          test.fail_without_changes:
+            - name: |
+                This host is not running SUSE Linux Enterprise Server 15 SP3.
+                Please upgrade the operating system first, before running the adopt process.
+            - failhard: True
+
+        {% endif %}
+
+        # This check is so we bail out in case of a half upgraded system (for example,
+        # if someone runs `zypper dup` with both SES6 and SES7 repos available, they'll
+        # potentially still have ceph nautilus installed, which we really don't want).
+        # TODO: figure out how to print a friendly error message in this case
+        ceph must be pacific if installed:
+          cmd.run:
+            - name: "[ ! -x /usr/bin/ceph ] || ceph --version | grep -q 'ceph version 16'"
+            - failhard: True
+
+        {% set ses7_container_image = salt['pillar.get']('ses7_container_image', 'registry.suse.de/devel/storage/7.0/pacific/containers/ses/7.1/ceph/ceph') %}
+
+        cephadm:
+          pkg.installed:
+            - pkgs:
+              - cephadm
+              - podman
+
+        /etc/containers/registries.conf:
+          file.managed:
+            - source:
+                - salt://ceph/upgrade/ses7/files/registries.conf.j2
+            - template: jinja
+            - user: root
+            - group: root
+            - mode: '0644'
+            - makedirs: True
+            - backup: minion
+            - failhard: True
+
+        {% set auth = salt['pillar.get']('ses7_container_registry_auth', {}) %}
+        {% if auth %}
+        login to registry:
+          cmd.run:
+            - name: |
+                cephadm registry-login \
+                --registry-url {{ auth.get('registry') }} \
+                --registry-username {{ auth.get('username') }} \
+                --registry-password {{ auth.get('password') }}
+            - failhard: True
+        {% endif %}
+
+        pull ceph container image:
+          cmd.run:
+            - name: "cephadm --image {{ ses7_container_image }} pull"
+            - unless: "podman images | grep -q {{ ses7_container_image }}"
+            - failhard: True
+
+        adopt ceph daemons:
+          cmd.run:
+            - name: |
+                for DAEMON in $(cephadm ls|jq -r '.[] | select(.style=="legacy") | .name'); do
+                    case $DAEMON in
+                        mon*|mgr*|osd*)
+                            cephadm --image {{ ses7_container_image }} adopt --container-init --skip-pull --style legacy --force-start --name $DAEMON
+                            ;;
+                    esac
+                done
+            - unless: "[ -z \"$(cephadm ls|jq -r '.[] | select(.style==\"legacy\") | .name')\" ]"
+            - failhard: True
+        EOF
+        ceph osd add-noout osd-1
+        ceph osd add-noout osd-2
+        ceph osd add-noout osd-3
+        ceph osd add-noout osd-4
+        salt admin.ses6to7p state.apply ceph.upgrade.ses7.adopt
+        salt osd-1.ses6to7p state.apply ceph.upgrade.ses7.adopt
+        salt osd-2.ses6to7p state.apply ceph.upgrade.ses7.adopt
+        salt osd-3.ses6to7p state.apply ceph.upgrade.ses7.adopt
+        salt osd-4.ses6to7p state.apply ceph.upgrade.ses7.adopt
+        ceph osd rm-noout osd-1
+        ceph osd rm-noout osd-2
+        ceph osd rm-noout osd-3
+        ceph osd rm-noout osd-4
       register: shell_output
     - debug:
         var: shell_output.stdout_lines

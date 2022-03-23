@@ -1,4 +1,4 @@
-- name: UPGR-ADD-REPOS-ALL
+- name: SES7_to_7P-UPGR-ADD-REPOS-ALL
   hosts: all
   become: true
   tasks:
@@ -51,7 +51,7 @@
     - debug:
         var: shell_output.stdout_lines
 
-- name: SES7P-INSTALL-PKGS-ALL
+- name: SES7_to_7P-INSTALL-PKGS-ALL
   hosts: all
   become: true
   tasks:

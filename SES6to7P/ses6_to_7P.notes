@@ -6,3 +6,38 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 
 ansible -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory all --list-hosts
 ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory SES6_to_7P-upgrade.yaml
+
+crontab -e -> remove lines
+
+salt-run upgrade.ceph_salt_config > ceph-salt-config.json
+salt-run upgrade.generate_service_specs > specs.yaml
+
+zypper remove 'deepsea*'
+zypper install ceph-salt
+
+systemctl restart salt-master.service
+salt \* saltutil.sync_all
+
+ceph-salt import ceph-salt-config.json
+
+ceph-salt config /ssh generate
+
+ceph-salt apply
+
+salt '*' service.stop ceph-crash
+salt '*' service.disable ceph-crash
+
+ceph orch pause
+
+cephadm adopt --style=legacy --name prometheus.$(hostname)
+cephadm adopt --style=legacy --name alertmanager.$(hostname)
+cephadm adopt --style=legacy --name grafana.$(hostname)
+
+zypper rm golang-github-prometheus-node_exporter
+
+ceph orch apply -i specs.yaml
+ceph orch resume
+
+ceph dashboard ac-user-set-password admin --force-password -i pwd
+
+### mds daemons must be redeployed with ceph orch 

@@ -1,4 +1,4 @@
-- name: SES6-all-install-salt-minion
+- name: SES6_to_7P-all-install-salt-minion
   hosts: all
   become: true
   tasks:
@@ -15,7 +15,7 @@
         state: started
         enabled: yes
 
-- name: SES6-admins-install-salt-master
+- name: SES6_to_7P-admins-install-salt-master
   hosts: admins
   become: true
   tasks:
