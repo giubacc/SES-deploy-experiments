@@ -39,8 +39,18 @@
         state: present
         auto_import_keys: yes
     - zypper_repository:
+        name: mod-dev
+        repo: 'http://download.suse.de/ibs/SUSE/Products/SLE-Module-Development-Tools/15-SP3/x86_64/product/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
+        name: mod-dev-update
+        repo: 'http://download.suse.de/ibs/SUSE/Updates/SLE-Module-Development-Tools/15-SP3/x86_64/update/'
+        state: present
+        auto_import_keys: yes
+    - zypper_repository:
         repo: '*'
-        runrefresh: yes
+        runrefresh: yes     
     - name: adding devel storage repo and dist-upgrade
       shell: |
         zypper --non-interactive ar --refresh http://download.suse.de/ibs/SUSE:/SLE-15-SP3:/Update:/Products:/SES7/images/repo/SUSE-Enterprise-Storage-7.1-POOL-x86_64-Media1/ devel-repo-1
@@ -50,6 +60,12 @@
       register: shell_output
     - debug:
         var: shell_output.stdout_lines
+    - zypper:
+        name: zstd
+        state: present
+    - zypper:
+        name: gdb
+        state: present
 
 - name: SES6_to_7P-INSTALL-PKGS-ALL
   hosts: all
