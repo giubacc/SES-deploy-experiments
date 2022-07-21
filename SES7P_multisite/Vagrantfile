@@ -1,0 +1,68 @@
+
+IMAGE_NAME = "sles-15-sp3"
+CLUSTER_TYPE = "ses7p-ms"
+ADMIN_HOSTNAME = "admin"
+ADMIN_COUNT = 1
+
+CLUSTER_NET = "10.97.201"
+CLUSTER_NET_ADMIN_LAST_OCTET = 101
+
+ansible_groups = {
+  "admins" => [
+    "admin.[1:#{ADMIN_COUNT}]"
+  ]
+}
+
+Vagrant.configure("2") do |config|
+
+  config.ssh.insert_key = false
+  config.vm.provider "libvirt" do |lv|
+    lv.connect_via_ssh = false
+    lv.qemu_use_session = false
+    lv.nic_model_type = "e1000"
+    lv.cpu_mode = 'host-passthrough'
+  end
+
+  #admin node
+  (1..ADMIN_COUNT).each do |i|
+    config.vm.define "admin.#{i}" do |admin|
+      admin.vm.provider "libvirt" do |lv|
+        lv.memory = 4096
+        lv.cpus = 2
+        lv.storage :file, size: "8G", type: 'qcow2', serial: "664620#{i}"
+        lv.storage :file, size: "8G", type: 'qcow2', serial: "774684#{i}"
+        lv.storage :file, size: "8G", type: 'qcow2', serial: "774685#{i}"
+        lv.storage :file, size: "8G", type: 'qcow2', serial: "774686#{i}"
+      end
+
+      admin.vm.provision "file",  source: "keys/sesdev",
+                                  destination:".ssh/sesdev"
+      admin.vm.provision "file",  source: "keys/sesdev.pub",
+                                  destination:".ssh/sesdev.pub"
+
+      admin.vm.synced_folder ".", "/vagrant", disabled: true
+
+      admin.vm.box = IMAGE_NAME
+      admin.vm.hostname = "#{ADMIN_HOSTNAME}-#{i}.#{CLUSTER_TYPE}"
+      admin.vm.network "private_network", autostart: true, ip: "#{CLUSTER_NET}.#{CLUSTER_NET_ADMIN_LAST_OCTET+i}"
+
+      if i == ADMIN_COUNT
+        admin.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-bootstrap.yaml"
+          ansible.groups = ansible_groups
+        end
+        admin.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-salt-install.yaml"
+          ansible.groups = ansible_groups
+        end
+        admin.vm.provision :ansible do |ansible|
+          ansible.limit = "all"
+          ansible.playbook = "SES7P-salt-config.yaml"
+          ansible.groups = ansible_groups
+        end
+      end
+    end
+  end
+end

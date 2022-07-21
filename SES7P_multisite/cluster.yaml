@@ -1,0 +1,26 @@
+service_type: crash
+service_name: crash
+placement:
+  host_pattern: '*'
+---
+service_type: mgr
+service_name: mgr
+placement:
+  host_pattern: '*'
+---
+service_type: mon
+service_name: mon
+placement:
+  hosts:
+  host_pattern: '*'
+---
+service_type: osd
+service_id: fill-mesh
+service_name: fill_mesh
+placement:
+  host_pattern: '*'
+spec:
+  data_devices:
+    all: true
+  filter_logic: AND
+  objectstore: bluestore
