@@ -1,8 +1,8 @@
 
-IMAGE_NAME = "sles-15-sp3"
+IMAGE_NAME = "opensuse/Leap-15.3.x86_64"
 CLUSTER_TYPE = "ses7p-ms"
 ADMIN_HOSTNAME = "admin"
-ADMIN_COUNT = 1
+ADMIN_COUNT = 2
 
 CLUSTER_NET = "10.97.201"
 CLUSTER_NET_ADMIN_LAST_OCTET = 101
@@ -29,10 +29,9 @@ Vagrant.configure("2") do |config|
       admin.vm.provider "libvirt" do |lv|
         lv.memory = 4096
         lv.cpus = 2
-        lv.storage :file, size: "8G", type: 'qcow2', serial: "664620#{i}"
-        lv.storage :file, size: "8G", type: 'qcow2', serial: "774684#{i}"
-        lv.storage :file, size: "8G", type: 'qcow2', serial: "774685#{i}"
-        lv.storage :file, size: "8G", type: 'qcow2', serial: "774686#{i}"
+        lv.storage :file, size: "6G", type: 'qcow2', serial: "664620#{i}"
+        lv.storage :file, size: "6G", type: 'qcow2', serial: "774684#{i}"
+        lv.storage :file, size: "6G", type: 'qcow2', serial: "874666#{i}"
       end
 
       admin.vm.provision "file",  source: "keys/sesdev",

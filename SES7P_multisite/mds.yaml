@@ -1,9 +1,0 @@
-# before applying this file run:
-# ceph osd pool create sesdev_fs_data
-# ceph osd pool create sesdev_fs_metadata
-# ceph fs new sesdev_fs sesdev_fs_metadata sesdev_fs_data
-
-service_type: mds
-service_id: sesdev_mds
-placement:
-  host_pattern: '*'

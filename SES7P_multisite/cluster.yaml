@@ -14,9 +14,15 @@ placement:
   hosts:
   host_pattern: '*'
 ---
+service_type: mds
+service_id: mds
+placement:
+  hosts:
+  host_pattern: '*'
+---
 service_type: osd
-service_id: fill-mesh
-service_name: fill_mesh
+service_id: osd
+service_name: osd
 placement:
   host_pattern: '*'
 spec:
@@ -24,3 +30,27 @@ spec:
     all: true
   filter_logic: AND
   objectstore: bluestore
+---
+service_type: prometheus
+service_id: prometheus
+placement:
+  hosts:
+  host_pattern: '*'
+---
+service_type: grafana
+service_id: grafana
+placement:
+  hosts:
+  host_pattern: '*'
+---
+service_type: alertmanager
+service_id: alertmanager
+placement:
+  hosts:
+  host_pattern: '*'
+---
+service_type: node-exporter
+service_id: node-exporter
+placement:
+  hosts:
+  host_pattern: '*'

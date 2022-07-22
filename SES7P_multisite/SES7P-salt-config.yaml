@@ -6,6 +6,17 @@
       shell: |
         ceph-salt config /ceph_cluster/minions add '*'
         ceph-salt config /ceph_cluster/roles/cephadm add '*'
+        ceph-salt config /ceph_cluster/roles/alertmanager add '*'
+        ceph-salt config /ceph_cluster/roles/grafana add '*'
+        ceph-salt config /ceph_cluster/roles/igw add '*'
+        ceph-salt config /ceph_cluster/roles/master add '*'
+        ceph-salt config /ceph_cluster/roles/mds add '*'
+        ceph-salt config /ceph_cluster/roles/mgr add '*'
+        ceph-salt config /ceph_cluster/roles/mon add '*'
+        ceph-salt config /ceph_cluster/roles/node-exporter add '*'
+        ceph-salt config /ceph_cluster/roles/prometheus add '*'
+        ceph-salt config /ceph_cluster/roles/rgw add '*'
+        ceph-salt config /ceph_cluster/roles/storage add '*'
         ceph-salt config /ceph_cluster/roles/admin add {{ ansible_facts['fqdn']}}
         ceph-salt config /ceph_cluster/roles/bootstrap set {{ ansible_facts['fqdn']}}
         ceph-salt config /cephadm_bootstrap/mon_ip set {{ ansible_facts['eth1'].ipv4.address }}
@@ -16,11 +27,19 @@
         ceph-salt config /cephadm_bootstrap/dashboard/username set admin
         ceph-salt config /cephadm_bootstrap/dashboard/password set admin
         ceph-salt config /cephadm_bootstrap/dashboard/force_password_update disable
-        ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.suse.de/devel/storage/7.0/pacific/containers/ses/7.1/ceph/ceph
+        ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.opensuse.org/filesystems/ceph/pacific/images/ceph/ceph
         ceph-salt config /cephadm_bootstrap/ceph_conf add global
+        ceph-salt config /cephadm_bootstrap/ceph_conf/global set "osd crush chooseleaf type" 0
         ceph-salt config /cephadm_bootstrap/ceph_conf/global set cluster_network 10.97.201.0/24
       register: shell_output
     - debug:
         var: shell_output.stdout_lines
+
     - name: SES7P-admins-ceph-salt-apply
       command: ceph-salt apply --non-interactive
+
+    - name: Copy cluster.yaml to local directory
+      copy: src=cluster.yaml dest=/home/vagrant mode=0777
+
+    - name: ceph orch apply
+      command: ceph orch apply -i /home/vagrant/cluster.yaml

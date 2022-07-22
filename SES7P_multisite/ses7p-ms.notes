@@ -1,0 +1,9 @@
+radosgw-admin realm create --rgw-realm=kingdom --default
+radosgw-admin zonegroup create --rgw-zonegroup=uk --master --default
+radosgw-admin zone create --rgw-zonegroup=uk --rgw-zone=london --master --default
+
+radosgw-admin user create --uid="synchronization-user" --display-name="Synchronization User" --system
+
+radosgw-admin zone modify --rgw-zonegroup=uk --rgw-zone=london --access-key= --secret=
+radosgw-admin period update --commit
+
