@@ -1,0 +1,11 @@
+service_type: rgw
+service_id: kingdom.london
+placement:
+  hosts:
+  host_pattern: '*'
+---
+service_type: rgw
+service_id: kingdom.york
+placement:
+  hosts:
+  host_pattern: '*'

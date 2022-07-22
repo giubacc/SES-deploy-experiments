@@ -1,9 +1,46 @@
+##cluster1 zone master
+
+#it seems that an endpoint has to be defined, otherwise secondary will fail
+
 radosgw-admin realm create --rgw-realm=kingdom --default
 radosgw-admin zonegroup create --rgw-zonegroup=uk --master --default
-radosgw-admin zone create --rgw-zonegroup=uk --rgw-zone=london --master --default
-
+radosgw-admin zone create --rgw-zonegroup=uk --rgw-zone=london --endpoints=http://10.97.201.102:80 --master --default
 radosgw-admin user create --uid="synchronization-user" --display-name="Synchronization User" --system
-
 radosgw-admin zone modify --rgw-zonegroup=uk --rgw-zone=london --access-key= --secret=
 radosgw-admin period update --commit
 
+##cluster2 zone secondary
+
+radosgw-admin realm pull --url=10.97.201.102:80 --access-key= --secret=
+radosgw-admin zone create --rgw-zonegroup=uk --rgw-zone=york --access-key= --secret=
+radosgw-admin period update --commit
+
+##########
+
+ceph config set global debug_rgw 15/20
+ceph orch restart rgw.kingdom.london
+ceph orch restart rgw.york.london
+journalctl -f -u
+
+ceph config set mon mon_allow_pool_delete true
+
+ceph osd pool rm .rgw.root .rgw.root --yes-i-really-really-mean-it
+
+ceph osd pool rm default.rgw.control default.rgw.control --yes-i-really-really-mean-it
+ceph osd pool rm default.rgw.log default.rgw.log --yes-i-really-really-mean-it
+ceph osd pool rm default.rgw.meta default.rgw.meta --yes-i-really-really-mean-it
+
+ceph osd pool rm london.rgw.control london.rgw.control --yes-i-really-really-mean-it
+ceph osd pool rm london.rgw.log london.rgw.log --yes-i-really-really-mean-it
+ceph osd pool rm london.rgw.meta london.rgw.meta --yes-i-really-really-mean-it
+
+ceph osd pool rm york.rgw.control york.rgw.control --yes-i-really-really-mean-it
+ceph osd pool rm york.rgw.log york.rgw.log --yes-i-really-really-mean-it
+ceph osd pool rm york.rgw.meta york.rgw.meta --yes-i-really-really-mean-it
+
+##########
+
+s3cmd -c ses1.cfg mb s3://foo
+s3cmd -c ses2.cfg mb s3://test
+s3cmd -c ses1.cfg put test.txt s3://foo
+s3cmd -c ses2.cfg put foo.txt s3://test
